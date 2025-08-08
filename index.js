@@ -32,44 +32,38 @@
 // // Run immediately on start
 // updateExcel();
 // index.js
-const express = require("express");
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-const XLSX = require("xlsx");
+import express from "express";
+import axios from "axios";
+import fs from "fs";
+import path from "path";
+import XLSX from "xlsx";
+import { fileURLToPath } from "url";
+
+// Needed to replace __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Path to the Excel file (same file always updated)
 const filePath = path.join(__dirname, "visits.xlsx");
 
-// Function to fetch and update Excel
 async function updateExcel() {
   try {
     const { data } = await axios.get("https://hehe-kohl-six.vercel.app/logs");
-
-    // Convert JSON to worksheet
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Logs");
-
-    // Write the file (overwrite)
     XLSX.writeFile(wb, filePath);
-
     console.log(`✅ Excel updated at ${new Date().toLocaleString()}`);
   } catch (err) {
     console.error("❌ Error updating Excel:", err.message);
   }
 }
 
-// Update every 1 minute
 setInterval(updateExcel, 60 * 1000);
-
-// First update on server start
 updateExcel();
 
-// Route to download the file
 app.get("/visits.xlsx", (req, res) => {
   res.download(filePath);
 });
